@@ -63,7 +63,6 @@ jobs:
 
   deploy:
     runs-on: ess-machine
-    needs: build-docker
     environment: production
     steps:
       - name: Deploy

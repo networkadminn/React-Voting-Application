@@ -2,7 +2,7 @@
 name: CI Multiple tools
 
 on:
-  push: :
+  push: 
     branch: main
 
 jobs:

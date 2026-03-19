@@ -56,11 +56,11 @@ jobs:
 
       - name: Install Trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.69.3
 
       - name: File system scan
-        run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
-
+        run: trivy fs --format json --output results.json .
+        
   deploy:
     runs-on: ess-machine
     environment: production

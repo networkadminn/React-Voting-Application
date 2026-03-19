@@ -7,7 +7,7 @@ on:
 
 jobs:
   VA-build:
-    runs-on: ubuntu-latest
+    runs-on: ess-machine
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,7 +17,7 @@ jobs:
       
   Security-scan:
     needs: VA-build
-    runs-on: ubuntu-latest
+    runs-on: ess-machine
     steps:
       - uses: actions/checkout@v4
       - name: Trivy Installation

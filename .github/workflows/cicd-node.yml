@@ -61,18 +61,6 @@ jobs:
       - name: File system scan
         run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
 
-  build-docker:
-    runs-on: ess-machine
-    needs: [trivy-scan]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build image
-        run: docker build -t myapp:latest .
-
-      - name: Scan image
-        run: trivy image myapp:latest
-
   deploy:
     runs-on: ess-machine
     needs: build-docker

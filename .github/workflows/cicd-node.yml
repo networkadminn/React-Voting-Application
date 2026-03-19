@@ -1,0 +1,29 @@
+
+name: CI Multiple tools
+
+on:
+  push: :
+    branch: main
+
+jobs:
+  VA-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm i
+      
+  Security-scan:
+    needs: VA-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy Installation
+        run: |
+         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.69.3
+
+      - name: Trivy Scan
+        run: trivy fs --format json --output results.json .
+        

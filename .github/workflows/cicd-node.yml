@@ -1,29 +1,82 @@
-
-name: CI Multiple tools
+name: Secure CI
 
 on:
-  push: 
-    branch: main
+  push:
+    branches: [ main ]
 
 jobs:
-  VA-build:
+
+  build:
     runs-on: ess-machine
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm i
-      
-  Security-scan:
-    needs: VA-build
+
+      - name: Install deps
+        run: npm ci
+
+  sast:
     runs-on: ess-machine
+    needs: build
     steps:
       - uses: actions/checkout@v4
-      - name: Trivy Installation
-        run: |
-         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.69.3
 
-      - name: Trivy Scan
-        run: trivy fs --format json --output results.json .
-        
+      - name: Sonar Scan
+        uses: sonarsource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  dependency-scan:
+    runs-on: ess-machine
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+  secret-scan:
+    runs-on: ess-machine
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan secrets
+        uses: gitleaks/gitleaks-action@v2
+
+  trivy-scan:
+    runs-on: ess-machine
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh
+
+      - name: File system scan
+        run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
+
+  build-docker:
+    runs-on: ess-machine
+    needs: [trivy-scan]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t myapp:latest .
+
+      - name: Scan image
+        run: trivy image myapp:latest
+
+  deploy:
+    runs-on: ess-machine
+    needs: build-docker
+    environment: production
+    steps:
+      - name: Deploy
+        run: echo "Deploy with approval"
